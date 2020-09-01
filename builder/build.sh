@@ -84,6 +84,9 @@ cp -R /builder/files/* ${BUILD_PATH}/
 # docker tools and some customizations
 EDITION=$1 BUILDER=$2 chroot ${BUILD_PATH} /bin/bash < /builder/chroot-script.sh
 
+# [last] modify/add image files directly
+cp -R /builder/last_files/* ${BUILD_PATH}/
+
 # unmount pseudo filesystems
 umount -l ${BUILD_PATH}/dev/pts
 umount -l ${BUILD_PATH}/dev
