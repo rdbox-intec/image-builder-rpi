@@ -249,7 +249,7 @@ ln -s /boot/fake-hwclock.data /etc/fake-hwclock.data
 mkdir -p /etc/systemd/system/fake-hwclock.service.d
 cat <<EOM |tee /etc/systemd/system/fake-hwclock.service.d/override.conf
 [Unit]
-After=boot.mount
+Before=systemd-fsck-root.service
 #Wants=boot.mount
 #Requires=boot.mount
 EOM
@@ -290,8 +290,9 @@ curl -sSL "https://raw.githubusercontent.com/docker/compose/${DOCKER_COMPOSE_VER
 
 # install docker-ce (w/ install-recommends)
 apt-get install -y --force-yes \
---no-install-recommends \
-"docker-ce=${DOCKER_CE_VERSION}"
+  --no-install-recommends \
+  "docker-ce-cli=${DOCKER_CE_VERSION}" \
+  "docker-ce=${DOCKER_CE_VERSION}"
 
 # install bash completion for Docker CLI
 curl -sSL https://raw.githubusercontent.com/docker/docker-ce/master/components/cli/contrib/completion/bash/docker -o /etc/bash_completion.d/docker
@@ -310,6 +311,7 @@ if [ "${BUILDER}" = "cloud" ]; then
     systemctl disable rdbox-boot.service
     # our repo
     apt-get install -y \
+    softether-vpnclient \
     softether-vpnbridge \
     softether-vpncmd
     apt-get install -y \
@@ -326,6 +328,7 @@ elif [ "${BUILDER}" = "local" ]; then
     # our repo
     gdebi -n "$(echo /tmp/deb-files/*softether-vpncmd_*.deb | grep -v dbgsym | sed 's/ /\n/g' | sort -r | head -1)"
     gdebi -n "$(echo /tmp/deb-files/*softether-vpnbridge_*.deb | grep -v dbgsym | sed 's/ /\n/g' | sort -r | head -1)"
+    gdebi -n "$(echo /tmp/deb-files/*softether-vpnclient_*.deb | grep -v dbgsym | sed 's/ /\n/g' | sort -r | head -1)"
     apt-get install -y \
     hostapd
     systemctl disable hostapd.service
@@ -337,7 +340,9 @@ apt-mark hold rdbox
 # Built in WiFi
 ## suppress NIC barrel
 echo 'SUBSYSTEM=="net", ACTION=="add", DRIVERS=="?*", ATTR{address}=="b8:27:eb:??:??:??", ATTR{dev_id}=="0x0", ATTR{type}=="1", KERNEL=="eth*", NAME="eth0"
-SUBSYSTEM=="net", ACTION=="add", DRIVERS=="?*", ATTR{address}=="b8:27:eb:*", ATTR{dev_id}=="0x0", ATTR{type}=="1", KERNEL=="wlan*", NAME="wlan0"
+SUBSYSTEM=="net", ACTION=="add", DRIVERS=="?*", ATTR{address}=="b8:27:eb:??:??:??", ATTR{dev_id}=="0x0", ATTR{type}=="1", KERNEL=="wlan*", NAME="wlan0"
+SUBSYSTEM=="net", ACTION=="add", DRIVERS=="?*", ATTR{address}=="dc:a6:32:??:??:??", ATTR{dev_id}=="0x0", ATTR{type}=="1", KERNEL=="eth*", NAME="eth0"
+SUBSYSTEM=="net", ACTION=="add", DRIVERS=="?*", ATTR{address}=="dc:a6:32:??:??:??", ATTR{dev_id}=="0x0", ATTR{type}=="1", KERNEL=="wlan*", NAME="wlan0"
 ' > /etc/udev/rules.d/70-persistent-net.rules
 
 # enable daemon.json
@@ -402,9 +407,11 @@ net.ipv6.conf.default.disable_ipv6 = 1
 # It will run on Docker.
 ## dnsmasq
 apt-get install -y \
+bind9 \
 dnsmasq \
 resolvconf
 systemctl disable dnsmasq.service
+systemctl disable bind9
 cp /etc/dnsmasq.conf /etc/rdbox/dnsmasq.conf.org
 mv /etc/dnsmasq.conf /etc/dnsmasq.conf.org
 touch /etc/rdbox/dnsmasq.conf
