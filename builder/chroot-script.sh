@@ -278,12 +278,11 @@ chmod +x /usr/local/bin/docker-machine
 # install bash completion for Docker Machine
 curl -sSL "https://raw.githubusercontent.com/docker/machine/v${DOCKER_MACHINE_VERSION}/contrib/completion/bash/docker-machine.bash" -o /etc/bash_completion.d/docker-machine
 
-# install docker-compose
+# [PRE] install docker-compose
 apt-get install -y \
   --no-install-recommends \
   python3 python3-pip python3-setuptools
 update-alternatives --install /usr/bin/python python /usr/bin/python3.7 2
-pip3 install "docker-compose==${DOCKER_COMPOSE_VERSION}"
 
 # install bash completion for Docker Compose
 curl -sSL "https://raw.githubusercontent.com/docker/compose/${DOCKER_COMPOSE_VERSION}/contrib/completion/bash/docker-compose" -o /etc/bash_completion.d/docker-compose
@@ -465,6 +464,9 @@ ssh_args = -o ControlMaster=auto -o ControlPersist=60s -o StrictHostKeyChecking=
 [defaults]
 retry_files_save_path = "/tmp"
 ' > /etc/ansible/ansible.cfg
+
+# install docker-compose
+pip3 install "docker-compose==${DOCKER_COMPOSE_VERSION}"
 
 # disable dhcpcd
 systemctl disable dhcpcd.service
