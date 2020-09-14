@@ -91,7 +91,8 @@ HYPRIOT_DEVICE="Raspberry Pi"
 DEST=$(readlink -m /etc/resolv.conf)
 export DEST
 mkdir -p "$(dirname "${DEST}")"
-echo "nameserver 8.8.8.8" > "${DEST}"
+echo "nameserver 1.1.1.1" > "${DEST}"
+echo "nameserver 8.8.8.8" >> "${DEST}"
 echo "nameserver 8.8.4.4" >> "${DEST}"
 
 # set up Docker CE repository
@@ -135,7 +136,7 @@ Pin-Priority: 999' | tee /etc/apt/preferences.d/rdbox
 # install kubeadmn
 curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
 cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
-deb http://apt.kubernetes.io/ kubernetes-xenial main
+deb https://apt.kubernetes.io/ kubernetes-xenial main
 EOF
 ################################################ RDBOX #
 
@@ -207,6 +208,14 @@ proc /proc proc defaults 0 0
 PARTUUID=${IMAGE_PARTUUID_PREFIX}-01 /boot vfat defaults 0 0
 PARTUUID=${IMAGE_PARTUUID_PREFIX}-02 / ext4 defaults,noatime 0 1
 " > /etc/fstab
+
+# TODO: Temporary support for mesh Wi-Fi. (rollback kernel to 4.19.118)
+apt-get install -y \
+--no-install-recommends \
+rpi-update
+SKIP_BACKUP=1 SKIP_CHECK_PARTITION=1 SKIP_WARNING=1 /usr/bin/rpi-update e1050e94821a70b2e4c72b318d6c6c968552e9a2
+apt-mark hold raspberrypi-kernel
+#######################################################################
 
 # as the Pi does not have a hardware clock we need a fake one
 apt-get install -y \
@@ -443,6 +452,7 @@ ln -s /snap/bin/helm /usr/local/bin/helm
 # For Network Debug
 apt-get install -y \
 dnsutils \
+jq \
 traceroute
 
 ## For ansible

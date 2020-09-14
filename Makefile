@@ -32,7 +32,6 @@ tag:
 build-local:
 	mkdir -p ./builder/files/tmp/deb-files/
 	cp -rf ../image-builder-raw/rpi-raw.img.zip .
-	#cp -rf /var/cache/pbuilder/raspbian-stretch-armhf/result/*.deb ./builder/files/tmp/deb-files/
 	cp -rf /var/cache/pbuilder/raspbian-buster-armhf/result/*.deb ./builder/files/tmp/deb-files/
 	docker build -t image-builder-rpi .
 	
