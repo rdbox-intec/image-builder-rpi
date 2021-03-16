@@ -138,6 +138,9 @@ curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
 cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
 deb https://apt.kubernetes.io/ kubernetes-xenial main
 EOF
+
+# buster backports
+echo 'deb http://httpredir.debian.org/debian buster-backports main contrib' | tee -a /etc/apt/sources.list.d/debian-backports.list
 ################################################ RDBOX #
 
 
@@ -208,14 +211,6 @@ proc /proc proc defaults 0 0
 PARTUUID=${IMAGE_PARTUUID_PREFIX}-01 /boot vfat defaults 0 0
 PARTUUID=${IMAGE_PARTUUID_PREFIX}-02 / ext4 defaults,noatime 0 1
 " > /etc/fstab
-
-# TODO: Temporary support for mesh Wi-Fi. (rollback kernel to 4.19.118)
-apt-get install -y \
---no-install-recommends \
-rpi-update
-SKIP_BACKUP=1 SKIP_CHECK_PARTITION=1 SKIP_WARNING=1 /usr/bin/rpi-update e1050e94821a70b2e4c72b318d6c6c968552e9a2
-apt-mark hold raspberrypi-kernel
-#######################################################################
 
 # as the Pi does not have a hardware clock we need a fake one
 apt-get install -y \
@@ -351,6 +346,7 @@ echo 'SUBSYSTEM=="net", ACTION=="add", DRIVERS=="?*", ATTR{address}=="b8:27:eb:?
 SUBSYSTEM=="net", ACTION=="add", DRIVERS=="?*", ATTR{address}=="b8:27:eb:??:??:??", ATTR{dev_id}=="0x0", ATTR{type}=="1", KERNEL=="wlan*", NAME="wlan0"
 SUBSYSTEM=="net", ACTION=="add", DRIVERS=="?*", ATTR{address}=="dc:a6:32:??:??:??", ATTR{dev_id}=="0x0", ATTR{type}=="1", KERNEL=="eth*", NAME="eth0"
 SUBSYSTEM=="net", ACTION=="add", DRIVERS=="?*", ATTR{address}=="dc:a6:32:??:??:??", ATTR{dev_id}=="0x0", ATTR{type}=="1", KERNEL=="wlan*", NAME="wlan0"
+
 ' > /etc/udev/rules.d/70-persistent-net.rules
 
 # enable daemon.json
@@ -358,10 +354,12 @@ mkdir -p /etc/docker
 echo '{}' > /etc/docker/daemon.json
 
 # Multi-hop Wi-Fi
-## bridge and batman
+## bridge
 apt-get install -y \
-bridge-utils \
-batctl
+bridge-utils
+## batman
+apt-get -t buster-backports install -y \
+batctl=2020.4-2~bpo10+1
 echo "batman-adv" >> /etc/modules
 
 # install kubeadmn
